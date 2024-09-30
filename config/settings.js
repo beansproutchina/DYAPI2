@@ -1,17 +1,20 @@
-const crypto=require("crypto");
+import crypto from "crypto";
 const passwordHash=(password)=>{
     return crypto.createHash("md5").update(password+"ywy521").digest("hex");
 }
-
-module.exports = {
+export default{
     // API前缀
     urlPrefix:"api",
     // 服务器端口
     port: 3000,
     // 保存数据的间隔时间
     saveInterval: 60 * 1000,
-    // 数据最大限制量
+    // web接口最大单次数据查询量
     maxLimit: 100,
+    // web接口是否允许批量更新
+    multiUpdate : 0,
+    // web接口是否允许批量删除
+    multiDelete : 0,
     // JWT过期时间
     jwtExpire: 1000 * 60 * 60 * 24,
     // JWT密钥

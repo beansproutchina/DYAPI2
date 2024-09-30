@@ -1,16 +1,20 @@
 {
-  "dependencies": {
-    "fastify": "^5.0.0"
-  },
   "name": "dyapi2",
   "version": "1.0.0",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "description": "",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@koa/router": "^13.1.0",
+    "better-sqlite3": "^11.3.0",
+    "koa": "^2.15.3",
+    "koa-body-esm": "^5.0.3",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.2.2"
+  }
 }
