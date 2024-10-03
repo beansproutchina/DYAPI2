@@ -318,7 +318,7 @@ export class JsonContainer extends Container {
      * @param {string} tablename - 表名
      * @param {DataField} field - 要设置的字段
      */
-    setField(tablename, field) {
+    async setField(tablename, field) {
         if (!this.#data[tablename]) {
             this.#data[tablename] = this.genNewTable();
         }
@@ -340,5 +340,6 @@ export class JsonContainer extends Container {
                 }
             }
         }
+        return;
     }
 }

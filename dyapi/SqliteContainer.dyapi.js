@@ -27,7 +27,7 @@ export class SQLiteContainer extends Container {
      * @param {string} tablename - 表名
      * @param {DataField} field - 要设置的字段
      */
-    setField(tablename, field) {
+    async setField(tablename, field) {
         if (!this.#tables.find(t => t.tbl_name == tablename)) {
             if (this.numberId) {
                 this.#db.exec(`CREATE TABLE ${tablename} (id INTEGER PRIMARY KEY AUTOINCREMENT);`);
@@ -75,6 +75,7 @@ export class SQLiteContainer extends Container {
             }
 
         }
+        return;
     }
     /**
  * 创建一个新的记录。
@@ -145,7 +146,6 @@ export class SQLiteContainer extends Container {
         let num = (this.#db.prepare(`SELECT COUNT(1) FROM ${SQLiteContainer.AntiSqlInject(table)}`).get())["COUNT(1)"];
         param.total = num;
         param.pages = Math.ceil(num / param.limit);
-        console.log(sql);
         return this.#db.prepare(sql).all(array);
     }
 

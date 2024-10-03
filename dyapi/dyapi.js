@@ -33,30 +33,38 @@ export const RegisterController = (name, fn) => {
     if (name.endsWith("s")) {
         logging.error(`控制器${name}不能以s结尾，防止与模型访问冲突。`)
     }
-    Configs.controllers[name] = fn;
+    return;
 }
 /**
  * @param {string} name 
  * @param {Container} obj 
  */
-export const RegisterContainer = (name, obj) => {
+export const RegisterContainer = async (name, obj) => {
     if (Configs.containers[name]) {
         logger.error(`容器名称${name}已存在，无法注册。`);
         return;
     }
     Configs.containers[name] = obj;
+    if(obj.init){
+        await obj.init();
+    }
+    return;
 }
 /**
  * 
  * @param {string} name 
  * @param {model} obj 
  */
-export const RegisterModel = (name, obj) => {
+export const RegisterModel = async (name, obj) => {
     if (Configs.models[name]) {
         logger.error(`模型名称${name}已存在，无法注册。`);
         return;
     }
     Configs.models[name] = obj;
+    if(obj.init){
+        await obj.init();
+    }
+    return;
 }
 /**
  * 
@@ -73,6 +81,11 @@ export const RegisterMiddleware = (name, fn) => {
 
 
 export class Container {
+    /**
+     * 初始化容器，可以在这里执行一些初始化操作，如创建表结构等。
+     */
+    async init() {
+    }
     async create(table, item) {
     };
     async read(table, {
@@ -94,7 +107,7 @@ export class Container {
      * @param {string} tablename - 表名
      * @param {DataField} field - 要设置的字段
      */
-    setField(tablename, field) {
+    async setField(tablename, field) {
     };
 }
 
@@ -161,10 +174,10 @@ export class model {
         this.tablename = tablename;
         this.datafields = [new DataField("id", container.numberId ? DataType.Number : DataType.String, false, 0).setPrimaryKey()]
     }
-    SetField(...dataFields) {
+    async SetField(...dataFields) {
         this.datafields.push(...dataFields);
         for (let i of dataFields) {
-            this.container.setField(this.tablename, i);
+            await this.container.setField(this.tablename, i);
         }
         return this;
     }
