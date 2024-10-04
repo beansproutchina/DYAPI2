@@ -23,4 +23,10 @@ export default{
     cookieLogin: true,
     // 密码哈希函数
     passwordHash,
+    // 默认用户Model权限
+    defaultModelPermission: "C,R,U,D,",
+    // 默认用户Field权限
+    defaultFieldPermission: "r,w,p,",
+    // ObjectID生成时的设备ID。需要以很多0结尾。
+    deviceId: "abc1230000000000",
 };

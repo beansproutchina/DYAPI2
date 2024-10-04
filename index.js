@@ -7,6 +7,7 @@ import settings from './config/settings.js';
 import koaBody from 'koa-body-esm';
 
 
+
 const koa = new Koa();
 const router = new Router();
 
@@ -32,41 +33,50 @@ const start = async () => {
     for (let model in dyapi.Configs.models) {
       dyapi.logger.info(`registered model ${model}`);
       router.get(`/${settings.urlPrefix}/${model}s`, async (ctx) => {
-        let res = await dyapi.Configs.models[model].Q("RL", ctx.state?.user?.type, ctx.query, {});
+        if(ctx.state?.user?.type){
+          ctx.state.usertype=ctx.state.user.type;
+        }
+        let res = await dyapi.Configs.models[model].Q("RL", ctx.state, ctx.query, {});
         ctx.etag = dyapi.Configs.currentEtag;
         ctx.response.body = res;
       })
       router.get(`/${settings.urlPrefix}/${model}s/:id`, async (ctx) => {
         let query = ctx.query;
         query.id = ctx.params.id;
-        let res = await dyapi.Configs.models[model].Q("RO", ctx.state?.user?.type, query, {});
+        let res = await dyapi.Configs.models[model].Q("RO", ctx.state, query, {});
         ctx.etag = dyapi.Configs.currentEtag;
         ctx.response.body = res;
       })
       router.post(`/${settings.urlPrefix}/${model}s`, koaBody(), async (ctx) => {
-        let res = await dyapi.Configs.models[model].Q("C", ctx.state?.user?.type, ctx.query, ctx.request.body);
+        let res = await dyapi.Configs.models[model].Q("C", ctx.state, ctx.query, ctx.request.body);
         ctx.response.body = res;
       })
       router.put(`/${settings.urlPrefix}/${model}s/:id`, koaBody(), async (ctx) => {
         let query = ctx.query;
         query.id = ctx.params.id;
-        let res = await dyapi.Configs.models[model].Q("U", ctx.state?.user?.type, query, ctx.request.body);
+        let res = await dyapi.Configs.models[model].Q("U", ctx.state, query, ctx.request.body);
         ctx.response.body = res;
       })
       router.put(`/${settings.urlPrefix}/${model}s`, koaBody(), async (ctx) => {
-        let res = await dyapi.Configs.models[model].Q("U", ctx.state?.user?.type, ctx.query, ctx.request.body);
+        let res = await dyapi.Configs.models[model].Q("U", ctx.state, ctx.query, ctx.request.body);
         ctx.response.body = res;
       })
       router.delete(`/${settings.urlPrefix}/${model}s/:id`, async (ctx) => {
         let query = ctx.query;
         query.id = ctx.params.id;
-        let res = await dyapi.Configs.models[model].Q("D", ctx.state?.user?.type, query, {});
+        let res = await dyapi.Configs.models[model].Q("D", ctx.state, query, {});
         ctx.response.body = res;
       })
       router.delete(`/${settings.urlPrefix}/${model}s`, koaBody(), async (ctx) => {
-        let res = await dyapi.Configs.models[model].Q("D", ctx.state?.user?.type, ctx.query, ctx.request.body);
+        let res = await dyapi.Configs.models[model].Q("D", ctx.state, ctx.query, ctx.request.body);
         ctx.response.body = res;
       })
+      for(let service of dyapi.Configs.models[model].services){
+        router[service.operation](`/${settings.urlPrefix}/${model}s/${service.path}`,async (ctx)=>{
+          let res = await dyapi.Configs.models[model].Q(service.path,ctx.state,ctx.query,ctx.request.body);
+          ctx.response.body = res;
+        })
+      }
     }
     for (let middleware in dyapi.Configs.middlewares) {
       dyapi.logger.info(`registered middleware ${middleware}`);
@@ -74,6 +84,7 @@ const start = async () => {
     }
 
     koa.use(async (ctx, next) => {
+      //logger
       let t = new Date();
       if (ctx.query.filter !== undefined) {
         try { ctx.query.filter = JSON.parse(ctx.query.filter); } catch (e) { ctx.query.filter = null };
@@ -83,6 +94,7 @@ const start = async () => {
     })
 
     koa.use(async (ctx, next) => {
+      //not found
       try {
         await next();
         if (ctx.body == null) {

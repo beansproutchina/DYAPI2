@@ -111,7 +111,13 @@ export class SQLiteContainer extends Container {
         }
 
         let sql = `INSERT INTO ${SQLiteContainer.AntiSqlInject(table)} (${fields.join(",")}) VALUES (${questions.slice(0, -1)});`
-        this.#db.prepare(sql).run(values);
+        try{
+            this.#db.prepare(sql).run(values);
+        }
+        catch(e){
+            logger.error("创建项目时出错：",e);
+            return null;
+        }
         sql = `SELECT id FROM ${table} ORDER BY id DESC LIMIT 1`
         return this.#db.prepare(sql).get().id;
     }
