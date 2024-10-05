@@ -8,32 +8,32 @@ export class SQLUtility {
                     r.push("(" + Object.entries(filter[k]).map(f => {
                         let a = [];
                         a[f[0]] = f[1];
-                        return SQLiteContainer.filterToSQL(null, a, array)
+                        return SQLUtility.filterToSQL(null, a, array)
                     }).join(" AND ") + ")");
                 }
                 else if (k.startsWith("$or")) {
                     r.push("(" + Object.entries(filter[k]).map(f => {
                         let a = [];
                         a[f[0]] = f[1];
-                        return SQLiteContainer.filterToSQL(null, a, array)
+                        return SQLUtility.filterToSQL(null, a, array)
                     }).join(" OR ") + ")");
                 }
                 else if (k.startsWith("$not")) {
-                    r.push("(NOT (" + SQLiteContainer.filterToSQL(null, filter[k], array) + "))");
+                    r.push("(NOT (" + SQLUtility.filterToSQL(null, filter[k], array) + "))");
                 }
                 else {
                     if (k.startsWith("$")) {
                         logger.error(`不支持的过滤器类型${k}。`);
                         continue;
                     } else {
-                        r.push(SQLiteContainer.filterToSQL(k, filter[k], array))
+                        r.push(SQLUtility.filterToSQL(k, filter[k], array))
                     }
                 }
             }
             return r.join(" AND ");
         }
         else {
-            key = SQLiteContainer.AntiSqlInject(key);
+            key = SQLUtility.AntiSqlInject(key);
             if (typeof filter == "object") {
                 if (filter instanceof RegExp) {
                     array.push(filter.source);
@@ -48,17 +48,17 @@ export class SQLUtility {
                                 r.push("(" + Object.entries(filter[k]).map(f => {
                                     let a = [];
                                     a[f[0]] = f[1];
-                                    return SQLiteContainer.filterToSQL(key, a, array)
+                                    return SQLUtility.filterToSQL(key, a, array)
                                 }).join(" OR ") + ")")
                             }
                             else if (k.startsWith("$and")) {
                                 r.push("(" + Object.entries(filter[k]).map(f => {
                                     let a = [];
                                     a[f[0]] = f[1];
-                                    return SQLiteContainer.filterToSQL(key, a, array)
+                                    return SQLUtility.filterToSQL(key, a, array)
                                 }).join(" AND ") + ")")
                             } else if (k.startsWith("$not")) {
-                                r.push("(NOT " + SQLiteContainer.filterToSQL(key, filter[k], array) + ")");
+                                r.push("(NOT " + SQLUtility.filterToSQL(key, filter[k], array) + ")");
                             } else if (k == "$eq") {
                                 r.push(`\`${key}\` = ?`);
                                 array.push(filter[k]);
@@ -125,10 +125,10 @@ export class SQLUtility {
             sql += ` WHERE \`id\`=?`;
             array.push(param.id);
         } else if (param.filter) {
-            sql += " WHERE " + SQLiteContainer.filterToSQL(null, param.filter, array);
+            sql += " WHERE " + SQLUtility.filterToSQL(null, param.filter, array);
         }
         if (param.orderBy) {
-            sql += ` ORDER BY \`${SQLiteContainer.AntiSqlInject(param.orderBy)}\``;
+            sql += ` ORDER BY \`${SQLUtility.AntiSqlInject(param.orderBy)}\``;
             if (param.orderDesc) {
                 sql += " DESC";
             }
