@@ -73,6 +73,9 @@ export class SQLiteContainer extends Container {
                 }
                 this.#db.exec(`ALTER TABLE ${tablename} ADD COLUMN ${field.name} ${type} DEFAULT ${defaultv};`);
             }
+            if(field.unique){
+                this.#db.exec(`ALTER TABLE ${tablename} ADD UNIQUE (${field.name})`);
+            }
 
         }
         return;

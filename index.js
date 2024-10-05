@@ -27,15 +27,12 @@ const start = async () => {
 
     for (let controller in dyapi.Configs.controllers) {
       dyapi.logger.info(`registered controller ${controller}`);
-      router.all(settings.urlPrefix + "/" + controller, dyapi.Configs.controllers[controller]);
+      router.all(`/${settings.urlPrefix}/${controller}`, koaBody(), dyapi.Configs.controllers[controller]);
     }
     console.log(dyapi.Configs.models);
     for (let model in dyapi.Configs.models) {
       dyapi.logger.info(`registered model ${model}`);
       router.get(`/${settings.urlPrefix}/${model}s`, async (ctx) => {
-        if(ctx.state?.user?.type){
-          ctx.state.usertype=ctx.state.user.type;
-        }
         let res = await dyapi.Configs.models[model].Q("RL", ctx.state, ctx.query, {});
         ctx.etag = dyapi.Configs.currentEtag;
         ctx.response.body = res;
@@ -72,15 +69,16 @@ const start = async () => {
         ctx.response.body = res;
       })
       for(let service of dyapi.Configs.models[model].services){
-        router[service.operation](`/${settings.urlPrefix}/${model}s/${service.path}`,async (ctx)=>{
+        router[service.operation](`/${settings.urlPrefix}/${model}s/${service.path}`, koaBody(),async (ctx)=>{
           let res = await dyapi.Configs.models[model].Q(service.path,ctx.state,ctx.query,ctx.request.body);
           ctx.response.body = res;
         })
       }
     }
+    koa.use(koaBody());
     for (let middleware in dyapi.Configs.middlewares) {
       dyapi.logger.info(`registered middleware ${middleware}`);
-      router.use(dyapi.Configs.middlewares[middleware]);
+      koa.use(dyapi.Configs.middlewares[middleware]);
     }
 
     koa.use(async (ctx, next) => {
@@ -90,7 +88,7 @@ const start = async () => {
         try { ctx.query.filter = JSON.parse(ctx.query.filter); } catch (e) { ctx.query.filter = null };
       }
       await next();
-      dyapi.logger.info(`${ctx.method} ${ctx.url} ${ctx.status} ${new Date() - t}ms`);
+      dyapi.logger.info(`${ctx.method} [${ctx.state?.usertype} ${ctx.state?.user.username ?? ""}] ${ctx.url} ${ctx.status} ${new Date() - t}ms`);
     })
 
     koa.use(async (ctx, next) => {
@@ -109,6 +107,7 @@ const start = async () => {
           code: err.statusCode || err.status || 500,
           message: err.message
         };
+        dyapi.logger.error(err)
       }
     })
     koa.use(router.routes()).use(router.allowedMethods())

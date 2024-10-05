@@ -29,4 +29,6 @@ export default{
     defaultFieldPermission: "r,w,p,",
     // ObjectID生成时的设备ID。需要以很多0结尾。
     deviceId: "abc1230000000000",
+    // Cron的时区
+    cronTimezone: "Asia/Shanghai",
 };

@@ -32,7 +32,7 @@ export const VALIDATORS = {
 }
 /** 
  * @param {string} name - 用于在Configs中标识控制器的唯一名称
- * @param {function} obj - 需要注册的控制器对象
+ * @param {function(ctx)} obj - 需要注册的控制器对象
 */
 export const RegisterController = (name, fn) => {
     if (Configs.controllers[name]) {
@@ -42,6 +42,7 @@ export const RegisterController = (name, fn) => {
     if (name.endsWith("s")) {
         logging.error(`控制器${name}不能以s结尾，防止与模型访问冲突。`)
     }
+    Configs.controllers[name] = fn;
     return;
 }
 /**
@@ -78,7 +79,9 @@ export const RegisterModel = async (name, obj) => {
 
 export const RegisterCronJob = async (cron, fn) => {
     logger.info(`注册定时任务：${cron}`);
-    Cron.schedule(cron, fn);
+    Cron.schedule(cron, fn,{
+        timezone: Configs.cronTimezone
+    });
 }
 /**
  * 
@@ -131,6 +134,7 @@ export class DataField {
     type = DataType.Object;
     defaultvalue = null;
     primaryKey = false;
+    unique = false;
     #permission = {};
     #validator = [];
     #processor = [];
@@ -173,6 +177,13 @@ export class DataField {
      */
     setPrimaryKey() {
         this.primaryKey = true;
+        return this;
+    }
+    /**
+     * 设置为独一无二
+     */
+    setUnique() {
+        this.unique = true;
         return this;
     }
     /**
@@ -270,11 +281,8 @@ export class model {
                 item[i] = f.process(item[i]);
             }
         }
-        if (i.id) {
-            if (this.services.find(x => x.operation == i.id)) {
-                logger.error("id与服务名重复", i.id);
-                return null;
-            }
+        if (item.id) {
+            delete item.id;
         }
         let data = await this.container.create(this.tablename, item);
         return data;

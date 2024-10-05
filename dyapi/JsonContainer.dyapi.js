@@ -1,4 +1,4 @@
-import { DataField, ObjectID, Container, DataType,Configs,updateEtag } from "./dyapi.js";
+import { DataField, ObjectID, Container, DataType,Configs,updateEtag, logger } from "./dyapi.js";
 import Settings from "../config/settings.js";
 import fs from "fs";
 
@@ -155,10 +155,6 @@ export class JsonContainer extends Container {
             }
             for (let field in this.#data[table].__fields) {
                 if (!item[field]) {
-                    if (this.#data[table].__fields[field].required) {
-                        logger.error(`字段${field}为必填字段，但未设置值。`);
-                        return null;
-                    }
                     item[field] = this.#data[table].__fields[field].getDefaultValue();
                 } else {
                     switch (this.#data[table].__fields[field].type) {
@@ -174,6 +170,12 @@ export class JsonContainer extends Container {
                         case DataType.Object:
                             item[field] = Object(item[field]);
                             break;
+                    }
+                    if( this.#data[table].__fields[field].unique){
+                        if(this.#data[table].items.find(x=>x[field]==item[field])){
+                            logger.error(`${field}重复`);
+                            return null;
+                        }
                     }
                 }
             }
@@ -276,6 +278,12 @@ export class JsonContainer extends Container {
             }
             else {
                 for (let f in item) {
+                    if( this.#data[table].__fields[f].unique){
+                        if(this.#data[table].items.find(x=>x[f]==item[f])){
+                            logger.error(`${field}重复`);
+                            continue;
+                        }
+                    }
                     o[f] = item[f];
                 }
             }
