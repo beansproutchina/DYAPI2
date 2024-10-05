@@ -280,7 +280,7 @@ export class JsonContainer extends Container {
                 for (let f in item) {
                     if( this.#data[table].__fields[f].unique){
                         if(this.#data[table].items.find(x=>x[f]==item[f])){
-                            logger.error(`${field}重复`);
+                            logger.error(`${f}重复`);
                             continue;
                         }
                     }

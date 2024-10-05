@@ -3,7 +3,6 @@ import settings from '../config/settings.js';
 
 export const newJwt=(payload)=>{//生成jwt
     payload.exp=Date.now()+settings.jwtExpire;
-
     let data=Buffer.from(JSON.stringify({
         'typ':'JWT',
         'alg':'HS256'

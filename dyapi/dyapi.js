@@ -40,7 +40,7 @@ export const RegisterController = (name, fn) => {
         return;
     }
     if (name.endsWith("s")) {
-        logging.error(`控制器${name}不能以s结尾，防止与模型访问冲突。`)
+        logger.error(`控制器${name}不能以s结尾，防止与模型访问冲突。`)
     }
     Configs.controllers[name] = fn;
     return;
@@ -80,7 +80,7 @@ export const RegisterModel = async (name, obj) => {
 export const RegisterCronJob = async (cron, fn) => {
     logger.info(`注册定时任务：${cron}`);
     Cron.schedule(cron, fn,{
-        timezone: Configs.cronTimezone
+        timezone: settings.cronTimezone
     });
 }
 /**
@@ -258,7 +258,7 @@ export class model {
     constructor(container, tablename) {
         this.container = container;
         this.tablename = tablename;
-        this.datafields = [new DataField("id", container.numberId ? DataType.Number : DataType.String, false, 0).setPrimaryKey()]
+        this.datafields = [new DataField("id", container.numberId ? DataType.Number : DataType.String, 0).setPrimaryKey()]
     }
     async SetField(...dataFields) {
         this.datafields.push(...dataFields);

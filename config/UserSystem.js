@@ -90,7 +90,7 @@ export default async () => {
     })
 
 
-    dyapi.RegisterContainer("user", UserContainer)
-    dyapi.RegisterModel("user", UserModel)
+    await dyapi.RegisterContainer("user", UserContainer)
+    await dyapi.RegisterModel("user", UserModel)
 
 }
