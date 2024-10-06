@@ -4,6 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import settings from "../config/settings.js";
 import Cron from 'node-cron';
+import { validate } from "jsonschema";
 
 export const logger = pino({
     transport: {
@@ -22,13 +23,35 @@ export const updateEtag = () => {
     Configs.currentEtag = crypto.randomUUID();
 }
 
+export const assert=(condition,errType,...params)=>{
+    if(!condition){
+        throw new errType(...params);
+    }
+}
+
+export class ClientError extends Error {
+    constructor(code,...params){
+        super(...params);
+        if(Error.captureStackTrace){
+            Error.captureStackTrace(this, ClientError);
+        }
+        this.statusCode = code;
+    }
+}
+
 export const VALIDATORS = {
     required: (v) => !!v,
     length: (min, max) => {
         return (v) => {
             return typeof v == "string" && v.length >= min && v.length <= max;
         }
+    },
+    schema: (schema) => {
+        return (v) => {
+            return validate(v,schema);
+        }
     }
+
 }
 /** 
  * @param {string} name - 用于在Configs中标识控制器的唯一名称
@@ -271,12 +294,10 @@ export class model {
         for (let i in item) {
             let f = this.datafields.find(x => x.name == i);
             if (f == undefined) {
-                logger.error("字段不存在", i);
-                return null;
+                throw new ClientError(400,`字段${i}不存在`);
             } else {
                 if (!f.validation(item[i])) {
-                    logger.error("字段不满足验证规则", i);
-                    return null;
+                    throw new ClientError(400,`字段${i}不符合验证规则`);
                 }
                 item[i] = f.process(item[i]);
             }
@@ -327,12 +348,11 @@ export class model {
         for (let i in item) {
             let f = this.datafields.find(x => x.name == i);
             if (f == undefined) {
-                logger.error("字段不存在", i);
+                throw new ClientError(400,`字段${i}不存在`);
                 return null;
             } else {
                 if (!f.validation(item[i])) {
-                    logger.error("字段不满足验证规则", i);
-                    return null;
+                    throw new ClientError(400,`字段${i}不符合验证规则`);
                 }
                 item[i] = f.process(item[i]);
             }

@@ -1,4 +1,4 @@
-import { DataField, ObjectID, Container, DataType, updateEtag, logger } from "./dyapi.js";
+import { DataField, ObjectID, Container, DataType, updateEtag, logger, ClientError } from "./dyapi.js";
 import Settings from "../config/settings.js";
 import fs from "fs";
 import bs from "better-sqlite3";
@@ -118,7 +118,7 @@ export class SQLiteContainer extends Container {
             this.#db.prepare(sql).run(values);
         }
         catch(e){
-            logger.error("创建项目时出错：",e);
+            throw new ClientError(503,`插入失败`);
             return null;
         }
         sql = `SELECT id FROM ${table} ORDER BY id DESC LIMIT 1`
@@ -245,7 +245,7 @@ export class SQLiteContainer extends Container {
                 }
                 else {
                     if (k.startsWith("$")) {
-                        logger.error(`不支持的过滤器类型${k}。`);
+                        throw new ClientError(400,`不支持的过滤器类型${k}`);
                         continue;
                     } else {
                         r.push(SQLiteContainer.filterToSQL(k, filter[k], array))

@@ -6,20 +6,20 @@ import settings from "./settings.js";
 const UserContainer = new SQLiteContainer("./data/dyapi.db", { numberId: true });
 
 export const authMiddleware = async (ctx, next) => {
-    ctx.state.usertype="PUBLIC";
-    let a,b;
-    if(settings.cookieLogin){
-        if(a=ctx.cookies.get("token")){
-            b=checkJwt(a);
+    ctx.state.usertype = "PUBLIC";
+    let a, b;
+    if (settings.cookieLogin) {
+        if (a = ctx.cookies.get("token")) {
+            b = checkJwt(a);
         }
-    }else{
-        if(a=ctx.get("X-DYAPI-Token")){
-            b=checkJwt(a);
+    } else {
+        if (a = ctx.get("X-DYAPI-Token")) {
+            b = checkJwt(a);
         }
     }
-    if(b){
-        ctx.state.user=b;
-        ctx.state.usertype=b.role;
+    if (b) {
+        ctx.state.user = b;
+        ctx.state.usertype = b.role;
     }
     await next();
 };
@@ -35,6 +35,14 @@ export default async () => {
         )
 
     dyapi.RegisterController("login", async (ctx) => {
+        dyapi.assert(dyapi.VALIDATORS.schema({
+            type: "object",
+            properties: {
+                username: { type: "string" },
+                password: { type: "string" }
+            },
+            required: ["username", "password"]
+        })(ctx.request.body), dyapi.ClientError, 400, "参数错误");
         let user = await UserModel.read({ filter: { username: ctx.request.body.username, password: settings.passwordHash(ctx.request.body.password) } });
         if (user.length == 0) {
             ctx.body = {
@@ -63,28 +71,24 @@ export default async () => {
 
     dyapi.RegisterController("register", async (ctx) => {
         const { username, password } = ctx.request.body
-        if (!dyapi.VALIDATORS.length(3, 10)(username) || !dyapi.VALIDATORS.length(3, 10)(password)) {
-            ctx.body = { code: 400, msg: "用户名或密码长度不正确" }
+        dyapi.assert(dyapi.VALIDATORS.length(3, 10)(username) && dyapi.VALIDATORS.length(3, 10)(password), dyapi.ClientError, 400, "参数错误")
+        let user = await UserModel.read({
+            filter: {
+                username,
+            }
+        })
+        if (user.length) {
+            ctx.body = { code: 400, msg: "用户名已存在" }
             return;
-        }else{
-            let user = await UserModel.read({
-                filter: {
-                    username,
-                }
+        } else {
+            let result = await UserModel.create({
+                username,
+                password,
             })
-            if(user.length){
-                ctx.body = { code: 400, msg: "用户名已存在" }
-                return;
-            }else{
-                let result=await UserModel.create({
-                    username,
-                    password,
-                })
-                if(result){
-                    ctx.body = { code: 200, msg: "注册成功" }
-                }else{
-                    ctx.body = { code: 400, msg: "注册失败" }
-                }
+            if (result) {
+                ctx.body = { code: 200, msg: "注册成功" }
+            } else {
+                ctx.body = { code: 400, msg: "注册失败" }
             }
         }
     })

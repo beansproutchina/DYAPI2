@@ -1,4 +1,4 @@
-import { DataField, ObjectID, Container, DataType,Configs,updateEtag, logger } from "./dyapi.js";
+import { DataField, ObjectID, Container, DataType,Configs,updateEtag, logger, ClientError } from "./dyapi.js";
 import Settings from "../config/settings.js";
 import fs from "fs";
 
@@ -44,7 +44,7 @@ export class JsonContainer extends Container {
                 }
                 else {
                     if (k.startsWith("$")) {
-                        logger.error(`不支持的过滤器类型${k}。`);
+                        throw new ClientError(400,`不支持的过滤器类型${k}`);
                         continue;
                     } else {
                         if (!JsonContainer.checkFilter(obj, k, filter[k])) {
@@ -173,8 +173,7 @@ export class JsonContainer extends Container {
                     }
                     if( this.#data[table].__fields[field].unique){
                         if(this.#data[table].items.find(x=>x[field]==item[field])){
-                            logger.error(`${field}重复`);
-                            return null;
+                            throw new ClientError(409,`unique字段${field}值重复`);
                         }
                     }
                 }
@@ -280,7 +279,7 @@ export class JsonContainer extends Container {
                 for (let f in item) {
                     if( this.#data[table].__fields[f].unique){
                         if(this.#data[table].items.find(x=>x[f]==item[f])){
-                            logger.error(`${f}重复`);
+                            throw new ClientError(409,`unique字段${f}值重复`);
                             continue;
                         }
                     }
