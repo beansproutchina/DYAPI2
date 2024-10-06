@@ -6,6 +6,10 @@
     "start": "chcp 65001 && node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin":{
+    "create":"create.js",
+    "update":"update.js"
+  },
   "author": "",
   "license": "ISC",
   "description": "",
