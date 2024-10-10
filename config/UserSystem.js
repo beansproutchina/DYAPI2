@@ -13,8 +13,11 @@ export const authMiddleware = async (ctx, next) => {
             b = checkJwt(a);
         }
     } else {
-        if (a = ctx.get("X-DYAPI-Token")) {
-            b = checkJwt(a);
+        if (a = ctx.get("Authorization")) {
+            if(a.startsWith("Bearer ")){
+                a = a.slice(7);
+                b = checkJwt(a);
+            }
         }
     }
     if (b) {
@@ -33,7 +36,6 @@ export default async () => {
             new dyapi.DataField("lastontime", dyapi.DataType.Date, null),
             new dyapi.DataField("role", dyapi.DataType.String, "user").setPermission("DEFAULT", "r").setPermission("admin", "r,w"),
         )
-
     dyapi.RegisterController("login", async (ctx) => {
         dyapi.assert(dyapi.VALIDATORS.schema({
             type: "object",
@@ -93,6 +95,9 @@ export default async () => {
         }
     })
 
+    dyapi.onReady(0,()=>{
+        dyapi.logger.info("user system ready")
+    })
 
     await dyapi.RegisterContainer("user", UserContainer)
     await dyapi.RegisterModel("user", UserModel)

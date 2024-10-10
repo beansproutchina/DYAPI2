@@ -6,6 +6,36 @@ import settings from "../config/settings.js";
 import Cron from 'node-cron';
 import { validate } from "jsonschema";
 
+const onListeners = {
+    ready: [],
+}
+
+const cronJobs = [];
+/** 注册“当一切准备就绪、服务器加载之前”执行的函数。
+ * @param {function} fn - 待执行的函数
+ * @param {number} priority - 优先级，默认为0
+ */
+export const onReady = (fn,priority=0) => {
+    onListeners.ready.push({
+        priority,
+        fn
+    })
+}
+export const __ready = async () => {
+    onListeners.ready.sort((a, b) => a.priority - b.priority);
+    for (let i of onListeners.ready) {
+        await i.fn();
+    }
+    for(let i of cronJobs){
+        Cron.schedule(i.cron, i.fn,{
+            timezone: settings.cronTimezone
+        });
+    }
+    return;
+}
+
+
+
 export const logger = pino({
     transport: {
         target: "pino-pretty",
@@ -23,16 +53,16 @@ export const updateEtag = () => {
     Configs.currentEtag = crypto.randomUUID();
 }
 
-export const assert=(condition,errType,...params)=>{
-    if(!condition){
+export const assert = (condition, errType, ...params) => {
+    if (!condition) {
         throw new errType(...params);
     }
 }
 
 export class ClientError extends Error {
-    constructor(code,...params){
+    constructor(code, ...params) {
         super(...params);
-        if(Error.captureStackTrace){
+        if (Error.captureStackTrace) {
             Error.captureStackTrace(this, ClientError);
         }
         this.statusCode = code;
@@ -48,7 +78,7 @@ export const VALIDATORS = {
     },
     schema: (schema) => {
         return (v) => {
-            return validate(v,schema);
+            return validate(v, schema);
         }
     }
 
@@ -102,9 +132,7 @@ export const RegisterModel = async (name, obj) => {
 
 export const RegisterCronJob = async (cron, fn) => {
     logger.info(`注册定时任务：${cron}`);
-    Cron.schedule(cron, fn,{
-        timezone: settings.cronTimezone
-    });
+    cronJobs.push({ cron, fn });
 }
 /**
  * 
@@ -276,7 +304,7 @@ export class model {
     #permission = {};
     services = [];
     datafields;
-    #preHandlers =[];
+    #preHandlers = [];
 
     constructor(container, tablename) {
         this.container = container;
@@ -294,10 +322,10 @@ export class model {
         for (let i in item) {
             let f = this.datafields.find(x => x.name == i);
             if (f == undefined) {
-                throw new ClientError(400,`字段${i}不存在`);
+                throw new ClientError(400, `字段${i}不存在`);
             } else {
                 if (!f.validation(item[i])) {
-                    throw new ClientError(400,`字段${i}不符合验证规则`);
+                    throw new ClientError(400, `字段${i}不符合验证规则`);
                 }
                 item[i] = f.process(item[i]);
             }
@@ -348,11 +376,11 @@ export class model {
         for (let i in item) {
             let f = this.datafields.find(x => x.name == i);
             if (f == undefined) {
-                throw new ClientError(400,`字段${i}不存在`);
+                throw new ClientError(400, `字段${i}不存在`);
                 return null;
             } else {
                 if (!f.validation(item[i])) {
-                    throw new ClientError(400,`字段${i}不符合验证规则`);
+                    throw new ClientError(400, `字段${i}不符合验证规则`);
                 }
                 item[i] = f.process(item[i]);
             }
@@ -400,7 +428,7 @@ export class model {
      * @param {function(state, query, body)} service 服务
      */
 
-    registerService(permission,path, method,  service) {
+    registerService(permission, path, method, service) {
         this.services.push({
             permission: permission,
             method: method,
@@ -414,16 +442,16 @@ export class model {
      * @param {string} method 操作名，如C,RO,RL,U,D及各个服务的path。
      * @param {function(state,query,body)} handler 处理器
      */
-    registerPrehandler(method,handler) {
-        this.#preHandlers.push([method,handler]);
+    registerPrehandler(method, handler) {
+        this.#preHandlers.push([method, handler]);
         return this;
     }
 
 
     async Q(method, state, query, body) {
-        for(let [m,h] of this.#preHandlers){
-            if(m==method){
-                await h(state,query,body);
+        for (let [m, h] of this.#preHandlers) {
+            if (m == method) {
+                await h(state, query, body);
             }
         }
         switch (method) {
@@ -436,7 +464,7 @@ export class model {
                 }
                 let data = {};
                 for (let i in body) {
-                    if (this.datafields.find(x => x.name == i && x.getPermission(state.usertype, "w"))) {
+                    if (this.datafields.find(x => x.name == i)) {
                         data[i] = body[i];
                     }
                 }

@@ -59,25 +59,25 @@ export class SQLUtility {
                                 }).join(" AND ") + ")")
                             } else if (k.startsWith("$not")) {
                                 r.push("(NOT " + SQLUtility.filterToSQL(key, filter[k], array) + ")");
-                            } else if (k == "$eq") {
+                            } else if (k.startsWith("$eq")) {
                                 r.push(`\`${key}\` = ?`);
                                 array.push(filter[k]);
                             }
-                            else if (k == "$ne") {
+                            else if (k.startsWith("$ne")) {
                                 r.push(`\`${key}\` != ?`);
                                 array.push(filter[k]);
-                            } else if (k == "$gt") {
-                                r.push(`\`${key}\` > ?`);
-                                array.push(filter[k]);
-                            } else if (k == "$gte") {
+                            } else if (k.startsWith("$gte")) {
                                 r.push(`\`${key}\` >= ?`);
                                 array.push(filter[k]);
-                            } else if (k == "$lt") {
-                                r.push(`\`${key}\` < ?`);
+                            } else if (k.startsWith("$gt")) {
+                                r.push(`\`${key}\` > ?`);
                                 array.push(filter[k]);
                             }
-                            else if (k == "$lte") {
+                            else if (k.startsWith("$lte")) {
                                 r.push(`\`${key}\` <= ?`);
+                                array.push(filter[k]);
+                            } else if (k.startsWith("$lt")) {
+                                r.push(`\`${key}\` < ?`);
                                 array.push(filter[k]);
                             }
                             else if (k.startsWith("in")) {

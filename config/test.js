@@ -13,9 +13,9 @@ export default async () => {
             new dyapi.DataField("uid", dyapi.DataType.Number, 0).setValidator(dyapi.VALIDATORS.length(3,20)),
             new dyapi.DataField("createdtime", dyapi.DataType.Date, null),
         )
-    TweetModel.registerPrehandler("RO",async (state,query,body)=>{
+    /*TweetModel.registerPrehandler("RO",async (state,query,body)=>{
         query.id="66fab1faABC12300000111111"
-    })
+    })*/
     dyapi.RegisterContainer("tweet", TweetContainer)
     dyapi.RegisterModel("tweet", TweetModel)
 }

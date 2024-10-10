@@ -27,7 +27,7 @@ const start = async () => {
 
     for (let controller in dyapi.Configs.controllers) {
       dyapi.logger.info(`registered controller ${controller}`);
-      router.all(`/${settings.urlPrefix}/${controller}`, koaBody(), dyapi.Configs.controllers[controller]);
+      router.all(`/${settings.urlPrefix}/${controller}`,  dyapi.Configs.controllers[controller]);
     }
     console.log(dyapi.Configs.models);
     for (let model in dyapi.Configs.models) {
@@ -44,17 +44,17 @@ const start = async () => {
         ctx.etag = dyapi.Configs.currentEtag;
         ctx.response.body = res;
       })
-      router.post(`/${settings.urlPrefix}/${model}s`, koaBody(), async (ctx) => {
+      router.post(`/${settings.urlPrefix}/${model}s`,  async (ctx) => {
         let res = await dyapi.Configs.models[model].Q("C", ctx.state, ctx.query, ctx.request.body);
         ctx.response.body = res;
       })
-      router.put(`/${settings.urlPrefix}/${model}s/:id`, koaBody(), async (ctx) => {
+      router.put(`/${settings.urlPrefix}/${model}s/:id`,  async (ctx) => {
         let query = ctx.query;
         query.id = ctx.params.id;
         let res = await dyapi.Configs.models[model].Q("U", ctx.state, query, ctx.request.body);
         ctx.response.body = res;
       })
-      router.put(`/${settings.urlPrefix}/${model}s`, koaBody(), async (ctx) => {
+      router.put(`/${settings.urlPrefix}/${model}s`,  async (ctx) => {
         let res = await dyapi.Configs.models[model].Q("U", ctx.state, ctx.query, ctx.request.body);
         ctx.response.body = res;
       })
@@ -64,12 +64,12 @@ const start = async () => {
         let res = await dyapi.Configs.models[model].Q("D", ctx.state, query, {});
         ctx.response.body = res;
       })
-      router.delete(`/${settings.urlPrefix}/${model}s`, koaBody(), async (ctx) => {
+      router.delete(`/${settings.urlPrefix}/${model}s`,  async (ctx) => {
         let res = await dyapi.Configs.models[model].Q("D", ctx.state, ctx.query, ctx.request.body);
         ctx.response.body = res;
       })
       for(let service of dyapi.Configs.models[model].services){
-        router[service.operation](`/${settings.urlPrefix}/${model}s/${service.path}`, koaBody(),async (ctx)=>{
+        router[service.operation](`/${settings.urlPrefix}/${model}s/${service.path}`, async (ctx)=>{
           let res = await dyapi.Configs.models[model].Q(service.path,ctx.state,ctx.query,ctx.request.body);
           ctx.response.body = res;
         })
@@ -88,7 +88,7 @@ const start = async () => {
         try { ctx.query.filter = JSON.parse(ctx.query.filter); } catch (e) { ctx.query.filter = null };
       }
       await next();
-      dyapi.logger.info(`${ctx.method} [${ctx.state?.usertype} ${ctx.state?.user.username ?? ""}] ${ctx.url} ${ctx.status} ${new Date() - t}ms`);
+      dyapi.logger.info(`${ctx.method} [${ctx.state?.usertype} ${ctx.state?.user?.username ?? ""}] ${ctx.url} ${ctx.status} ${new Date() - t}ms`);
     })
 
     koa.use(async (ctx, next) => {
@@ -112,7 +112,7 @@ const start = async () => {
     })
     koa.use(router.routes()).use(router.allowedMethods())
 
-
+    dyapi.__ready();
     koa.listen(Settings.port);
     dyapi.logger.info(`server started on http://localhost:${Settings.port}`)
   } catch (err) {
