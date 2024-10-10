@@ -99,6 +99,38 @@ export class MySQLContainer extends Container {
      * @returns {number|string|null} - 返回新创建项目的ID或null
      */
     async create(table, item) {
+        updateEtag();
+        let fields = [];
+        let questions = "";
+        let values = [];
+        for (let field in item) {
+            if (field == "id") {
+                continue;
+            }
+            fields.push("`" + SQLUtility.AntiSqlInject(field) + "`");
+            if (typeof (item[field]) === "object") {
+                if (item[field] instanceof Date) {
+                    values.push(item[field].getTime());
+                } else {
+                    values.push(JSON.stringify(item[field]));
+                }
+            } else {
+                values.push(item[field]);
+            }
+            questions += "?,";
+        }
+        if (!this.numberId) {
+            fields.push("`id`");
+            questions += "?,";
+            values.push(ObjectID());
+        }
+
+        let sql = `INSERT INTO ${SQLUtility.AntiSqlInject(table)} (${fields.join(",")}) VALUES (${questions.slice(0, -1)});`;
+        await this.#conn.execute(sql);
+        
+        sql = `SELECT id FROM ${table} ORDER BY id DESC LIMIT 1`;
+        let result = (await this.#conn.execute({sql: sql, rowsAsArray: true}))[0][0];
+        return result[0]; // id
     }
 
     /**
