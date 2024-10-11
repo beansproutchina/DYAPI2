@@ -151,6 +151,16 @@ export class MySQLContainer extends Container {
      * @returns {Array} - 包含查询结果的数组
      */
     async read(table, param) {
+        let fields = param.fields ? param.fields.join(",") : "*";
+        var values = [];
+        let suffix = SQLUtility.genSqlSuffix(param, values);
+        let sql = `SELECT ${fields} FROM ${SQLUtility.AntiSqlInject(table)} ${suffix};`;
+        let result = (await this.#conn.execute({sql: sql, rowsAsArray: true}))[0];
+        
+        let total_num = (await this.#conn.execute({sql: `SELECT COUNT(1) FROM ${SQLUtility.AntiSqlInject(table)};`, rowsAsArray: true}))[0][0];
+        param.total = total_num;
+        param.pages = Math.ceil(num / param.limit);
+        // TODO: data
     }
 
     /**
@@ -168,6 +178,32 @@ export class MySQLContainer extends Container {
          * @returns {number} - 更新的记录数量
          */
     async update(table, param, item) {
+        updateEtag();
+        param.field = null;
+        var sql = `UPDATE ${SQLUtility.AntiSqlInject(table)} SET`;
+        var values = [];
+        if(typeof item == "function") {
+            logger.warn("");
+            return 0;
+        }else {
+            for(let k in item){
+                sql += `${SQLUtility.AntiSqlInject(k)} = ?,`;
+                if (typeof (item[k]) === "object") {
+                    if (item[k] instanceof Date) {
+                        values.push(item[k].getTime());
+                    } else {
+                        values.push(JSON.stringify(item[k]));
+                    }
+                } else {
+                    values.push(item[k]);
+                }
+            }
+
+            sql = sql.slice(0, -1);
+            sql += SQLUtility.genSqlSuffix(param, values);
+
+            await this.#conn.query(sql, values);
+        }
     }
     /**
      * 删除表中的记录。
