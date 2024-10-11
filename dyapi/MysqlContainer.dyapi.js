@@ -1,5 +1,6 @@
 import { DataField, ObjectID, Container, DataType, updateEtag, logger } from "./dyapi.js";
 import mysql from 'mysql2/promise';
+import { SQLUtility } from "./SqlUtility.js";
 
 export class MySQLContainer extends Container {
 
@@ -126,7 +127,7 @@ export class MySQLContainer extends Container {
         }
 
         let sql = `INSERT INTO ${SQLUtility.AntiSqlInject(table)} (${fields.join(",")}) VALUES (${questions.slice(0, -1)});`;
-        await this.#conn.execute(sql);
+        await this.#conn.query(sql, values);
         
         sql = `SELECT id FROM ${table} ORDER BY id DESC LIMIT 1`;
         let result = (await this.#conn.execute({sql: sql, rowsAsArray: true}))[0][0];
