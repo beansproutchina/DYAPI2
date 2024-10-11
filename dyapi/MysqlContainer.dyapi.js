@@ -34,6 +34,10 @@ export class MySQLContainer extends Container {
         });
     }
 
+    async getFields(tablename) {
+        return (await this.#conn.execute({sql: `SHOW COLUMNS FROM ${tablename}`, rowsAsArray: true}))[0];
+    }
+
     /**
      * 设置字段
      * @param {string} tablename - 表名
@@ -49,7 +53,7 @@ export class MySQLContainer extends Container {
             this.#tables.push(tablename);
         }
         
-        let fields = (await this.#conn.execute({sql: `SHOW COLUMNS FROM ${tablename}`, rowsAsArray: true}))[0];
+        let fields = this.getFields(tablename);
         let target = fields.find(x => x[0] == field.name);
         if(target == null) {
             var sql_type = "";
@@ -157,10 +161,22 @@ export class MySQLContainer extends Container {
         let sql = `SELECT ${fields} FROM ${SQLUtility.AntiSqlInject(table)} ${suffix};`;
         let result = (await this.#conn.execute({sql: sql, rowsAsArray: true}))[0];
         
-        let total_num = (await this.#conn.execute({sql: `SELECT COUNT(1) FROM ${SQLUtility.AntiSqlInject(table)};`, rowsAsArray: true}))[0][0];
+        let total_num = (await this.#conn.execute(`SELECT COUNT(1) FROM ${SQLUtility.AntiSqlInject(table)};`))[0][0];
         param.total = total_num;
-        param.pages = Math.ceil(num / param.limit);
-        // TODO: data
+        param.pages = Math.ceil(total_num / param.limit);
+
+        let data_fields = param.fields ? param.fields : (await this.getFields(table)).map((f) => f[0]);
+
+        var data = [];
+        result.forEach(x => {
+            var single = [];
+            data_fields.forEach((f, i) => {
+                single[f] = x[i];
+            });
+            data.push(single);
+        });
+
+        return data;
     }
 
     /**
@@ -202,7 +218,8 @@ export class MySQLContainer extends Container {
             sql = sql.slice(0, -1);
             sql += SQLUtility.genSqlSuffix(param, values);
 
-            await this.#conn.query(sql, values);
+            let result = await this.#conn.query(sql, values);
+            return result[0].changedRows;
         }
     }
     /**
@@ -223,6 +240,8 @@ export class MySQLContainer extends Container {
         var sql = `DELETE FROM ${SQLUtility.AntiSqlInject(table)}`;
         let values = [];
         sql += SQLUtility.genSqlSuffix(param, values);
-        await this.#conn.query(sql, values);
+        let result = await this.#conn.query(sql, values);
+        
+        return result[0].affectedRows;
     }
 }
