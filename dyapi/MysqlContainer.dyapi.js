@@ -183,5 +183,10 @@ export class MySQLContainer extends Container {
      * @returns {number} - 删除的记录数量
      */
     async remove(table, param) {
+        updateEtag();
+        var sql = `DELETE FROM ${SQLUtility.AntiSqlInject(table)}`;
+        let values = [];
+        sql += SQLUtility.genSqlSuffix(param, values);
+        await this.#conn.query(sql, values);
     }
 }
