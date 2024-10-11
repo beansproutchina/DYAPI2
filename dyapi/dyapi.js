@@ -15,7 +15,7 @@ const cronJobs = [];
  * @param {function} fn - 待执行的函数
  * @param {number} priority - 优先级，默认为0
  */
-export const onReady = (fn,priority=0) => {
+export const onReady = (fn, priority = 0) => {
     onListeners.ready.push({
         priority,
         fn
@@ -26,8 +26,8 @@ export const __ready = async () => {
     for (let i of onListeners.ready) {
         await i.fn();
     }
-    for(let i of cronJobs){
-        Cron.schedule(i.cron, i.fn,{
+    for (let i of cronJobs) {
+        Cron.schedule(i.cron, i.fn, {
             timezone: settings.cronTimezone
         });
     }
@@ -311,6 +311,10 @@ export class model {
         this.tablename = tablename;
         this.datafields = [new DataField("id", container.numberId ? DataType.Number : DataType.String, 0).setPrimaryKey()]
     }
+    /**
+     * 设置字段
+     * @param {...DataField} dataFields - 要设置的字段
+     */
     async SetField(...dataFields) {
         this.datafields.push(...dataFields);
         for (let i of dataFields) {
@@ -318,6 +322,10 @@ export class model {
         }
         return this;
     }
+    /**
+     * 创建记录
+     * @param {object} item - 要创建的数据
+     */
     async create(item) {
         for (let i in item) {
             let f = this.datafields.find(x => x.name == i);
@@ -336,6 +344,11 @@ export class model {
         let data = await this.container.create(this.tablename, item);
         return data;
     }
+    /**
+     * 读取记录
+     * @param {object} param - 查询参数
+     * 
+     */
     async read(param = {
         fields,
         id,
@@ -345,7 +358,9 @@ export class model {
         limit,
         page,
         offset,
-        pops
+        pops,
+        total,
+        pages
     }) {
         let result = await this.container.read(this.tablename, param);
         if (param.pops) {
@@ -364,6 +379,11 @@ export class model {
 
         return result;
     }
+    /**
+     * 更新记录
+     * @param {object} param - 查询参数
+     * @param {object} item - 要更新的数据
+     */
     async update(param = {
         id,
         filter,
@@ -387,6 +407,10 @@ export class model {
         }
         return await this.container.update(this.tablename, param, item);
     }
+    /**
+     * 删除记录
+     * @param {object} param - 查询参数
+     */
     async remove(param = {
         id,
         filter,
@@ -397,6 +421,22 @@ export class model {
         offset
     }) {
         return await this.container.remove(this.tablename, param);
+    }
+    /**
+ * 调用服务。（不校验权限）
+ * @param {string} servicePath 服务名
+ * @param {object} state 状态
+ * @param {object} query 查询参数
+ * @param {object} body 请求体
+ * @returns {object} 服务返回值
+ */
+
+    async callService(servicePath, state, query, body) {
+        for (let i of this.services) {
+            if (i.path == servicePath) {
+                return await i.service.call(this, state, query, body);
+            }
+        }
     }
     /**
      * 设置权限
@@ -446,6 +486,7 @@ export class model {
         this.#preHandlers.push([method, handler]);
         return this;
     }
+
 
 
     async Q(method, state, query, body) {
@@ -644,7 +685,7 @@ export class model {
             default:
                 for (let i of this.services) {
                     if (i.path == method && this.getPermission(state.usertype, i.permission)) {
-                        return i.service.bind(this, state, query, body);
+                        return await i.service.call(this, state, query, body);
                     }
                 }
         }
