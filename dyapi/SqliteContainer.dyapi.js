@@ -1,7 +1,7 @@
 import { DataField, ObjectID, Container, DataType, updateEtag, logger, ClientError } from "./dyapi.js";
 import Settings from "../config/settings.js";
 import fs from "fs";
-import bs from "better-sqlite3";
+import {Database} from 'bun:sqlite'
 import { SQLUtility } from "./SqlUtility.js";
 
 export class SQLiteContainer extends Container {
@@ -19,7 +19,7 @@ export class SQLiteContainer extends Container {
         super();
         this.#filename = file;
         this.numberId = numberId;
-        this.#db = bs(file);
+        this.#db = new Database(file);
         this.#db.exec('PRAGMA journal_mode = WAL');
         this.#tables = this.#db.prepare("SELECT tbl_name FROM sqlite_master WHERE type = 'table';").all();
     }

@@ -16,7 +16,6 @@
   "type": "module",
   "dependencies": {
     "@koa/router": "^13.1.0",
-    "better-sqlite3": "^11.3.0",
     "jsonschema": "^1.4.1",
     "koa": "^2.15.3",
     "koa-body-esm": "^5.0.3",
