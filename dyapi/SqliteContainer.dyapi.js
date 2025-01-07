@@ -7,7 +7,7 @@ import { SQLUtility } from "./SqlUtility.js";
 export class SQLiteContainer extends Container {
     #filename = "";
     numberId = true;
-    #db = null;
+    #db;
     #tables = [];
     /**
     * 构造函数初始化SQLiteContainer实例。
@@ -20,7 +20,7 @@ export class SQLiteContainer extends Container {
         this.#filename = file;
         this.numberId = numberId;
         this.#db = bs(file);
-        this.#db.pragma('journal_mode = WAL');
+        this.#db.exec('PRAGMA journal_mode = WAL');
         this.#tables = this.#db.prepare("SELECT tbl_name FROM sqlite_master WHERE type = 'table';").all();
     }
     /**

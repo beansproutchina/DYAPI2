@@ -12,10 +12,10 @@ const onListeners = {
 
 const cronJobs = [];
 /** 注册“当一切准备就绪、服务器加载之前”执行的函数。
+ * @param {number} priority - 优先级，默认0
  * @param {function} fn - 待执行的函数
- * @param {number} priority - 优先级，默认为0
  */
-export const onReady = (fn, priority = 0) => {
+export const onReady = ( priority=0,fn) => {
     onListeners.ready.push({
         priority,
         fn
