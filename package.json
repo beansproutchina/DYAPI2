@@ -1,6 +1,6 @@
 {
   "name": "dyapi",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "main": "index.js",
   "scripts": {
     "start": "chcp 65001 && node index.js",
